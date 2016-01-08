@@ -31,26 +31,26 @@
     (shell-command-to-string
      (concat "honyaku-exe -q " (shell-quote-argument target)))))
 
-(defun gtran-target-start-pos ()
-  "Find the starting position of the symbol at point, unless inside a string."
-  (let ((sap (symbol-at-point)))
-    (when (and sap (not (in-string-p)))
-      (car (bounds-of-thing-at-point 'symbol)))))
-
 (require 'popwin)
 (setq display-buffer-function 'popwin:display-buffer)
 (setq popwin:popup-window-position 'bottom)
 (push '("*gtran*") popwin:special-display-config)
 
-(defun pop-gtran (start end)
+(defun pop-gtran (target)
+  (let* ((multiline-escaped-string (replace-regexp-in-string "\n" "\uFF00" target))
+	 (doc (gtran-process multiline-escaped-string)))
+    (when doc
+      (with-output-to-temp-buffer "*gtran*"
+	(princ doc)))))
+
+(defun gtran-symbol ()
+  (interactive)
+  (pop-gtran (symbol-name (symbol-at-point))))
+
+(defun gtran (start end)
      (interactive "r")
      (deactivate-mark t)
-     (let* ((string (buffer-substring-no-properties start end))
-	    (multiline-escaped-string (replace-regexp-in-string "\n" "\uFF00" string))
-	    (doc (gtran-process multiline-escaped-string)))
-       (when doc
-	 (with-output-to-temp-buffer "*gtran*"
-	   (princ doc)))))
+     (pop-gtran (buffer-substring-no-properties start end)))
 
 (provide 'gtran)
 ;;; gtran.el ends here
