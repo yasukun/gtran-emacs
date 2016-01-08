@@ -35,7 +35,12 @@
   "Find the starting position of the symbol at point, unless inside a string."
   (let ((sap (symbol-at-point)))
     (when (and sap (not (in-string-p)))
-            (car (bounds-of-thing-at-point 'symbol)))))
+      (car (bounds-of-thing-at-point 'symbol)))))
+
+(require 'popwin)
+(setq display-buffer-function 'popwin:display-buffer)
+(setq popwin:popup-window-position 'bottom)
+(push '("*gtran*") popwin:special-display-config)
 
 (defun pop-gtran (start end)
      (interactive "r")
@@ -44,11 +49,8 @@
 	    (multiline-escaped-string (replace-regexp-in-string "\n" "\uFF00" string))
 	    (doc (gtran-process multiline-escaped-string)))
        (when doc
-	 (popup-tip doc
-		    :point (gtran-target-start-pos)
-		    :around t
-		    :scroll-bar t
-		    :margin t))))
+	 (with-output-to-temp-buffer "*gtran*"
+	   (princ doc)))))
 
 (provide 'gtran)
 ;;; gtran.el ends here
