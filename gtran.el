@@ -31,26 +31,32 @@
     (shell-command-to-string
      (concat "honyaku-exe -q " (shell-quote-argument target)))))
 
+(defun gtran-process-ja (target)
+  (when (executable-find "honyaku-exe")
+    (shell-command-to-string
+     (concat "honyaku-exe -s ja -t en -q " (shell-quote-argument target)))))
+
 (require 'popwin)
 (setq display-buffer-function 'popwin:display-buffer)
 (setq popwin:popup-window-position 'bottom)
 (push '("*gtran*") popwin:special-display-config)
 
-(defun pop-gtran (target)
-  (let* ((multiline-escaped-string (replace-regexp-in-string "\n" "\uFF00" target))
-	 (doc (gtran-process multiline-escaped-string)))
-    (when doc
-      (with-output-to-temp-buffer "*gtran*"
-	(princ doc)))))
-
-(defun gtran-symbol ()
-  (interactive)
-  (pop-gtran (symbol-name (symbol-at-point))))
+(defmacro pop-gtran (target func)
+  `(let* ((multiline-escaped-string (replace-regexp-in-string "\n" " " ,target))
+	  (doc (,func multiline-escaped-string)))
+     (when doc
+       (with-output-to-temp-buffer "*gtran*"
+	 (princ doc)))))
 
 (defun gtran (start end)
      (interactive "r")
      (deactivate-mark t)
-     (pop-gtran (buffer-substring-no-properties start end)))
+     (pop-gtran (buffer-substring-no-properties start end) gtran-process))
+
+(defun gtran-ja (start end)
+     (interactive "r")
+     (deactivate-mark t)
+     (pop-gtran (buffer-substring-no-properties start end) gtran-process-ja))
 
 (provide 'gtran)
 ;;; gtran.el ends here
